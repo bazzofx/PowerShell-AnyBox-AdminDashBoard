@@ -4,7 +4,7 @@ $path ="$userProfile\Downloads\report.csv"
 $count=1
 $users = ""
 $credential = "your-email-here"
-$license = "FitzRoy:STANDARDWOFFPACK"
+$license = "YOUR_LICENSE_HERE"
 $ErrorActionPreference ="Stop"
 ##################################################################
 #--------------LOG VARIABLES START -------------------------------
@@ -101,7 +101,7 @@ loadCSV
 
 
 
-#------MINOR Functions
+#------------MINOR FUNCTIONS-------------
 function loadCSV{
     Try{
     $users = Import-CSV $box.search -Header "UserPrincipalName", "Login", "Password"
@@ -124,10 +124,18 @@ function Start-log{
 Add-Content $logGood "------------>                Starting Log File on               $(Get-Date)"
 Add-Content $logBad "------------>                Starting Log File on               $(Get-Date)"
 }
+function checkConnection{
+    Get-MsolDomain -ErrorAction SilentlyContinue
+    if($?){ 
+    Write-Host "You are already logged in to MsOline Service 365" -ForegroundColor Green}
+    else{ Write-Host "You will need to login before you use this application" -ForegroundColor Yellow}
+                        }
 installDependencies
+checkConnection
 Start-Log
-#-------------------------------------
-#-----MAIN Functions
+#----------------------------------------
+#--------------MAIN FUNCTIONS------------
+
 function login-AzureAD{
 Show-AnyBox -Message "You will be asked to login into MicrosfotAzure AD" -Buttons "OK"
 
@@ -184,17 +192,13 @@ Add-Content $logBad "------------ PASSWORD RESET EXCEPTION LOG START -----------
      Write-Host "---------------------------"
 
                  Add-Content $logGood " The password for $currentRowEmail has been reset to ---> |  $currentRowPassword"
-                 Add-Content $logGood ""
-                 Add-Content $logGood "-----------------------------------------"
-     }
+     }#-close Try
      Catch [System.Exception] {Write-Warning $Error[0]
                 Add-Content $logBad $Error[0]
-                Add-Content $logBad "[ERROR] $currentRowEmail PASSWORD FAIL TO UPDATED."
-                Add-Content $logBad "-------------------------------"}
+                Add-Content $logBad "[ERROR] $currentRowEmail PASSWORD FAIL TO UPDATED."}
      Catch {   Write-Host "[ERROR] : $currentRowEmail PASSWORD FAIL TO UPDATED." -ForegroundColor Red     
                 Add-Content $logBad $Error[0]
-                Add-Content $logBad "[ERROR] $currentRowEmail PASSWORD FAIL TO UPDATED."
-                Add-Content $logBad "-------------------------------"}
+                Add-Content $logBad "[ERROR] $currentRowEmail PASSWORD FAIL TO UPDATED."}
      
      $count +=1 
   
@@ -206,11 +210,11 @@ Add-Content $logBad "------------ PASSWORD RESET EXCEPTION LOG START -----------
                 Add-Content $logBad ""         
 
 } #-- close function 
-
-
 function lockAccount {
 Add-Content $logGood "----------- BLOCKING ACCOUNT SUCCESS LOG START --------------"
+Add-Content $logGood ""
 Add-Content $logBad "----------- BLOCKING ACCOUNT EXCEPTION LOG START --------------"
+Add-Content $logBad ""
 loadCSV
     
     
@@ -227,19 +231,15 @@ loadCSV
         Write-Host "---------------------------"
 
         Add-Content $logGood "[SUCCESS] - $currentRowEmail has been BLOCKED"
-        Add-Content $logGood ""
-        Add-Content $logGood "------------------------------------------"
         }
         Catch [System.Exception] {Write-Warning $Error[0]
                                   Write-Host $currentRowEmail -ForegroundColor Red
                                   Add-Content $logBad $Error[0]
                                   Add-Content $logBad "[ERROR] - Something went while trying to BLOCK $currentRowEmail"
-                                  Add-Content $logBad "----------------------------------------------------"
                                   }
         Catch {Write-Host "[ERROR] - Something went while trying to BLOCK $currentRowEmail" -ForegroundColor Red
                                   Add-Content $logBad $Error[0]
-                                  Add-Content $logBad "[ERROR] - Something went while trying to BLOCK $currentRowEmail"
-                                  Add-Content $logBad "----------------------------------------------------"   }
+                                  Add-Content $logBad "[ERROR] - Something went while trying to BLOCK $currentRowEmail"  }
         $count += 1
         }#- Close ForLoop
 Show-AnyBox -Message "Accounts on your list are now BLOCKED, please check exceptions. " -Buttons "OK"
@@ -247,6 +247,7 @@ Show-AnyBox -Message "Accounts on your list are now BLOCKED, please check except
         Add-Content $logGood ""
         Add-Content $logBad "----------- BLOCKING ACCOUNT EXCEPTION LOG ENDS --------------"
         Add-Content $logBad ""
+ 
 } #-- close function
 function unlockAccount {
 loadCSV
@@ -267,18 +268,14 @@ Add-Content $logBad "----------- UNLOCKING ACCOUNT EXCEPTION LOG START ---------
         Write-Host "---------------------------"
 
         Add-Content $logGood "[SUCCESS] - $currentRowEmail has been UNLOCKED"
-        Add-Content $logGood ""
-        Add-Content $logGood "---------------------------"
         }
         Catch [System.Exception] {Write-Warning $Error[0]
         Write-Host $currentRowEmail -ForegroundColor Red
         Add-Content $logBad $Error[0]
         Add-Content $logBad "[ERROR] - Something went wrong while UNLOCKING $currentRowEmail"
-        Add-Content $logBad "---------------------------"
         }
         Catch {Write-Host "[ERROR] - Something went wrong while UNLOCKING $currentRowEmail" -ForegroundColor Red
-        Add-Content $logBad "[ERROR] - Something went wrong while UNLOCKING $currentRowEmail"
-        Add-Content $logBad "---------------------------"        
+        Add-Content $logBad "[ERROR] - Something went wrong while UNLOCKING $currentRowEmail"        
         }
         $count += 1
 
@@ -288,8 +285,8 @@ Show-AnyBox -Message "Accounts on your list have been UNLOCKED, please check exc
         Add-Content $logGood ""
         Add-Content $logBad "----------- UNLOCKING ACCOUNT EXCEPTION LOG ENDS --------------"
         Add-Content $logBad ""
+ 
 } #-- close function
-
 function addLicense {
 loadCSV
         Add-Content $logGood "----------- ADDING LICENSES SUCCESS LOG START --------------"
@@ -312,20 +309,14 @@ loadCSV
      Write-Host "---------------------------"
 
      Add-Content $logGood "[SUCCESS] - License $license added to $currentRowEmail"
-     Add-Content $logGood ""
-     Add-Content $logGood "---------------------------"
    }
 Catch [System.Exception] {Write-Warning $Error[0]
 
     Add-Content $logBad $Error[0]
-    Add-Content $logBad "[ERROR] - Something went when attemption to add '$license' license to $currentRowEmail"
-    Add-Content $logBad ""
-    Add-Content $logBad "---------------------------"}
+    Add-Content $logBad "[ERROR] - Something went when attemption to add '$license' license to $currentRowEmail"}
 Catch {Write-Host "[ERROR] - Something went when attemption to add '$license' license to $currentRowEmail" -ForegroundColor Red
 
     Add-Content $logBad "[ERROR] - Something went when attemption to add '$license' license to $currentRowEmail"
-    Add-Content $logBad ""
-    Add-Content $logBad "--------------------------"
 }
     $count+=1
 
@@ -336,6 +327,7 @@ Show-AnyBox -Message "Accounts on your list were given licensen $license, please
         Add-Content $logGood ""
         Add-Content $logBad "----------- ADDING LICENSES EXCEPTION LOG END --------------"
         Add-Content $logBad ""
+
         } #-- close function
 function removeAllLicenses {
 loadCSV
@@ -357,22 +349,16 @@ Try{
         Write-Host "[SUCCESS] - The Licenses from $currentRowEmail has been removed." -ForegroundColor Green
 
         Add-Content $logGood "[SUCCESS] - The Licenses from $currentRowEmail has been removed."
-        Add-Content $logGood ""
-        Add-Content $logGood "--------------------------"
 
         }
    }
 Catch [System.Exception] {Write-Warning $Error[0]
         Add-Content $logBad $Error[0]
         Add-Content $logBad "[ERROR] - Something went wrong while removing licenses from $currentRowEmail"
-        Add-Content $logBad ""
-        Add-Content $logBad "--------------------------"
 }
 Catch {Write-Host "[ERROR] - Something went wrong while removing licenses from $email" -ForegroundColor Red
         Add-Content $logBad $Error[0]
         Add-Content $logBad "[ERROR] - Something went wrong while removing licenses from $currentRowEmail"
-        Add-Content $logBad ""
-        Add-Content $logBad "--------------------------"
 }
        $count +=1
 } # -- close ForEach
@@ -382,12 +368,12 @@ Show-AnyBox -Message "Accounts on your list had ALL licensed REMOVED, please che
         Add-Content $logGood ""
         Add-Content $logBad "----------- REMOVAL ALL LICENSES EXCEPTION LOG END --------------"
         Add-Content $logBad "" 
-   
+ 
         } #--close function
 
          
-# --                                   POP UP SETTINGS
-#-------------------------VARIABLES
+# --                                   MAIN WINDOW POP UP SETTINGS
+#--------------------VARIABLES-------------------
 $p = @(New-AnyBoxPrompt -InputType 'FileOpen' -Name "search" -Message 'Open File:' -ReadOnly)
 $p += @(New-AnyBoxPrompt -InputType Text -Name "check" -Message "Onboarding" -ValidateSet 'Reset Password','Unlock Account','Add License' -ShowSetAs Radio)
 $p += @(New-AnyBoxPrompt -InputType Text -name "check2" -Message "Offboarding" -ValidateSet 'Lock Account','Remove All Licenses' -ShowSetAs Radio)
@@ -397,20 +383,17 @@ $b = @(New-Button -Text "Login" -Onclick {login-365})
 $b += @(New-Button -Text "Execute")
 $b += @(New-Button -Text "Cancel")
 $m = "Users Admin Dashboard v1.0"
-# --                                   POP UP SETTINGS
-
 
 #--------->>>>> OPEN DIALOG BOX  <<<<<<<<<<<--------
-$box = Show-AnyBox -Prompt $p -Message $m -Buttons $b
-
+$Window = Show-AnyBox -Prompt $p -Message $m -Buttons $b 
 #-----------------------------------------------
 
 
-#----- Logic POP UP BOX
+#------------- Logic MAIN POP UP BOX ----------------
 
-if($box.check -eq "Reset Password") {resetPassAzure}
-elseif($box.check -eq "Unlock Account") {unlockAccount}
-elseif($box.check -eq "Add License") {addLicense}
-elseif($box.check2 -eq "Lock Account"){lockAccount}
-elseif($box.check2 -eq "Remove All Licenses"){removeAllLicenses}
+if($Window.check -eq "Reset Password") {resetPassAzure}
+elseif($Window.check -eq "Unlock Account") {unlockAccount}
+elseif($Window.check -eq "Add License") {addLicense}
+elseif($Window.check2 -eq "Lock Account"){lockAccount}
+elseif($Window.check2 -eq "Remove All Licenses"){removeAllLicenses}
 else {Write-Warning "Please make a selection !"}
